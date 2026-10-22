@@ -55,131 +55,113 @@ if(isset($_POST['regSubmit'])){
         if ($stmt->rowCount() > 0) {
             notify_alert('Email or Username Already Exit', 'danger', '3000', 'close');
         } else {
-            if (isset($_FILES['profile_pic'])) {
-                $file = $_FILES['profile_pic'];
-                $name = $file['name'];
+            $n = "default.png";
+            $frontid = "front.png";
+            $backId = "back.png";
 
-                $path = pathinfo($name, PATHINFO_EXTENSION);
+            $profileFolder = "../assets/profile/";
+            $idcardFolder = "../assets/idcard/";
 
-                $allowed = array('jpg', 'png', 'jpeg');
-
-
-                $folder = "../assets/profile/";
-                $n = time() . $name;
-
-                $destination = $folder . $n;
+            if (!is_dir($profileFolder)) {
+                @mkdir($profileFolder, 0777, true);
             }
-            if (move_uploaded_file($file['tmp_name'], $destination)) {
+            if (!is_dir($idcardFolder)) {
+                @mkdir($idcardFolder, 0777, true);
+            }
 
-                if (isset($_FILES['frontID'])) {
-                    $file = $_FILES['frontID'];
-                    $name = $file['name'];
-
-                    $path = pathinfo($name, PATHINFO_EXTENSION);
-
-                    $allowed = array('jpg', 'png', 'jpeg');
-
-
-                    $folder = "../assets/idcard/";
-                    $frontid = time() . $name;
-
-                    $destination = $folder . $n;
-                }
-                if (move_uploaded_file($file['tmp_name'], $destination)) {
-
-                    if (isset($_FILES['backID'])) {
-                        $file = $_FILES['backID'];
-                        $name = $file['name'];
-
-                        $path = pathinfo($name, PATHINFO_EXTENSION);
-
-                        $allowed = array('jpg', 'png', 'jpeg');
-
-
-                        $folder = "../assets/idcard/";
-                        $backId = time() . $name;
-
-                        $destination = $folder . $n;
+            if (isset($_FILES['profile_pic']) && !empty($_FILES['profile_pic']['name']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+                $ext = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'png', 'jpeg', 'webp'])) {
+                    $safeName = time() . "_" . preg_replace("/[^a-zA-Z0-9._-]/", "", basename($_FILES['profile_pic']['name']));
+                    if (@move_uploaded_file($_FILES['profile_pic']['tmp_name'], $profileFolder . $safeName)) {
+                        $n = $safeName;
                     }
-                    if (move_uploaded_file($file['tmp_name'], $destination)) {
+                }
+            }
 
-                        //INSERT INTO DATABASE
-                        $registered = "INSERT INTO users (acct_username,firstname,lastname,acct_email,acct_password,acct_no,acct_type,acct_gender,acct_currency,acct_status,acct_phone,acct_occupation,country,state,acct_address,acct_dob,acct_pin,ssn,frontID,backID,image) VALUES(:acct_username,:firstname,:lastname,:acct_email,:acct_password,:acct_no,:acct_type,:acct_gender,:acct_currency,:acct_status,:acct_phone,:acct_occupation,:country,:state,:acct_address,:acct_dob,:acct_pin,:ssn,:frontID,:backID,:image)";
-                        $reg = $conn->prepare($registered);
-                        $reg->execute([
-                            'acct_username' => $acct_username,
-                            'firstname' => $firstname,
-                            'lastname' => $lastname,
-                            'acct_email' => $acct_email,
-                            'acct_password' => password_hash((string)$acct_password, PASSWORD_BCRYPT),
-                            'acct_no' => $acct_no,
-                            'acct_type' => $acct_type,
-                            'acct_gender' => $acct_gender,
-                            'acct_currency' => $acct_currency,
-                            'acct_status' => $acct_status,
-                            'acct_phone' => $acct_phone,
-                            'acct_occupation' => $acct_occupation,
-                            'country' => $country,
-                            'state' => $state,
-                            'acct_address' => $acct_address,
-                            'acct_dob' => $acct_dob,
-                            'acct_pin' => $acct_pin,
-                            'ssn' => $ssn,
-                            'frontID' => $frontid,
-                            'backID' => $backId,
-                            'image'=>$n
-                ]);
+            if (isset($_FILES['frontID']) && !empty($_FILES['frontID']['name']) && $_FILES['frontID']['error'] === UPLOAD_ERR_OK) {
+                $ext = strtolower(pathinfo($_FILES['frontID']['name'], PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'png', 'jpeg', 'webp'])) {
+                    $safeFront = time() . "_front_" . preg_replace("/[^a-zA-Z0-9._-]/", "", basename($_FILES['frontID']['name']));
+                    if (@move_uploaded_file($_FILES['frontID']['tmp_name'], $idcardFolder . $safeFront)) {
+                        $frontid = $safeFront;
+                    }
+                }
+            }
 
+            if (isset($_FILES['backID']) && !empty($_FILES['backID']['name']) && $_FILES['backID']['error'] === UPLOAD_ERR_OK) {
+                $ext = strtolower(pathinfo($_FILES['backID']['name'], PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'png', 'jpeg', 'webp'])) {
+                    $safeBack = time() . "_back_" . preg_replace("/[^a-zA-Z0-9._-]/", "", basename($_FILES['backID']['name']));
+                    if (@move_uploaded_file($_FILES['backID']['tmp_name'], $idcardFolder . $safeBack)) {
+                        $backId = $safeBack;
+                    }
+                }
+            }
 
-                if (true) {
+            // INSERT INTO DATABASE
+            $registered = "INSERT INTO users (acct_username,firstname,lastname,acct_email,acct_password,acct_no,acct_type,acct_gender,acct_currency,acct_status,acct_phone,acct_occupation,country,state,acct_address,acct_dob,acct_pin,ssn,frontID,backID,image) VALUES(:acct_username,:firstname,:lastname,:acct_email,:acct_password,:acct_no,:acct_type,:acct_gender,:acct_currency,:acct_status,:acct_phone,:acct_occupation,:country,:state,:acct_address,:acct_dob,:acct_pin,:ssn,:frontID,:backID,:image)";
+            $reg = $conn->prepare($registered);
+            $saved = $reg->execute([
+                'acct_username' => $acct_username,
+                'firstname' => $firstname,
+                'lastname' => $lastname,
+                'acct_email' => $acct_email,
+                'acct_password' => password_hash((string)$acct_password, PASSWORD_BCRYPT),
+                'acct_no' => $acct_no,
+                'acct_type' => $acct_type,
+                'acct_gender' => $acct_gender,
+                'acct_currency' => $acct_currency,
+                'acct_status' => $acct_status,
+                'acct_phone' => $acct_phone,
+                'acct_occupation' => $acct_occupation,
+                'country' => $country,
+                'state' => $state,
+                'acct_address' => $acct_address,
+                'acct_dob' => $acct_dob,
+                'acct_pin' => $acct_pin,
+                'ssn' => $ssn,
+                'frontID' => $frontid,
+                'backID' => $backId,
+                'image' => $n
+            ]);
 
-                    // if ($acct_currency === 'USD') {
-                    //     $currency = "$";
-                    // } elseif ($acct_currency === 'EUR') {
-                    //     $currency = "&euro;";
-                    // }
-
+            if ($saved) {
+                // Send email notifications safely without crashing
+                try {
                     $fullName = $firstname . " " . $lastname;
-                    //EMAIL SENDING
                     $email = $acct_email;
                     $APP_NAME = $pageTitle;
                     $APP_URL = WEB_URL;
                     $message = $sendMail->regMsgUser($fullName,$acct_no,$acct_status,$acct_email,$acct_phone,$acct_type,$acct_pin,$APP_NAME,$APP_URL);
-                    //User Email
                     $subject = "Register - $APP_NAME";
                     $email_message->send_mail($email, $message, $subject);
-                    // Admin Email
-                    $subject = "User Register - $APP_NAME";
-                    $email_message->send_mail(WEB_EMAIL, $message, $subject);
+                    $subjectAdmin = "User Register - $APP_NAME";
+                    $email_message->send_mail(WEB_EMAIL, $message, $subjectAdmin);
+                } catch (\Throwable $e) {
+                    error_log("Registration email error: " . $e->getMessage());
                 }
 
-
-           if (true) {
-                    echo '<script type="text/javascript">
-                        $(document).ready(function(){
-                          swal({
-                            type: "success",
-                            title: "Account Created Successfully!",
-                            html: "Your Account ID is: <b style=\"color:#1F1B44;font-size:24px;display:block;margin:12px 0;letter-spacing:1px;\">'.$acct_no.'</b>Please save your Account ID. You can log in using either your <b>Account ID</b> or your <b>Email Address</b>.<br><br><small style=\"color:#777;\">Redirecting to sign in...</small>",
-                            padding: "2em",
-                            confirmButtonText: "Proceed to Login",
-                            confirmButtonColor: "#1F1B44"
-                          }).then(function() {
-                            window.location.href = "../login.php?acct='.$acct_no.'";
-                          });
-                          setTimeout(function(){
-                            window.location.href = "../login.php?acct='.$acct_no.'";
-                          }, 4500);
-                        });
-                    </script>';
-                } else {
-                    toast_alert('error', 'Sorry something went wrong');
-                }
-
-                }
-                }
+                echo '<script type="text/javascript">
+                    $(document).ready(function(){
+                      swal({
+                        type: "success",
+                        title: "Account Created Successfully!",
+                        html: "Your Account ID is: <b style=\"color:#1F1B44;font-size:24px;display:block;margin:12px 0;letter-spacing:1px;\">'.$acct_no.'</b>Please save your Account ID. You can log in using either your <b>Account ID</b> or your <b>Email Address</b>.<br><br><small style=\"color:#777;\">Redirecting to sign in...</small>",
+                        padding: "2em",
+                        confirmButtonText: "Proceed to Login",
+                        confirmButtonColor: "#1F1B44"
+                      }).then(function() {
+                        window.location.href = "../login.php?acct='.$acct_no.'";
+                      });
+                      setTimeout(function(){
+                        window.location.href = "../login.php?acct='.$acct_no.'";
+                      }, 4000);
+                    });
+                </script>';
+            } else {
+                toast_alert('error', 'Sorry something went wrong');
             }
-
         }
     }
 
