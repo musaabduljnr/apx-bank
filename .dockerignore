@@ -1,0 +1,8 @@
+.git
+.gitignore
+__MACOSX/
+Thumbs.db
+.DS_Store
+*.log
+error_log
+test.php
