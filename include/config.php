@@ -102,25 +102,75 @@ function getSiteSettings($conn = null) {
 }
 
 function autoInitializeDatabase($conn) {
+    if (!($conn instanceof PDO)) {
+        return;
+    }
+
+    // Check if the 'users' table exists and is accessible
     try {
-        $check = $conn->query("SHOW TABLES LIKE 'settings'");
-        if ($check && $check->rowCount() > 0) {
-            return;
-        }
-
-        $sqlFile = __DIR__ . "/../SQL File/database.sql";
-        if (!file_exists($sqlFile)) {
-            return;
-        }
-
-        $sql = file_get_contents($sqlFile);
-        if (!empty($sql)) {
-            $conn->exec($sql);
-            error_log("Database tables automatically imported from database.sql.");
+        $check = $conn->query("SELECT 1 FROM `users` LIMIT 1");
+        if ($check !== false) {
+            return; // Table exists, no initialization needed
         }
     } catch (\Throwable $e) {
-        error_log("Auto DB Init notice: " . $e->getMessage());
+        // Table doesn't exist, proceed with initialization
     }
+
+    $candidatePaths = [
+        __DIR__ . "/../database.sql",
+        __DIR__ . "/../SQL File/database.sql",
+        dirname(__DIR__) . "/database.sql",
+        dirname(__DIR__) . "/SQL File/database.sql",
+        "/var/www/html/database.sql",
+        "/var/www/html/SQL File/database.sql",
+    ];
+
+    $sqlFile = null;
+    foreach ($candidatePaths as $path) {
+        if (file_exists($path)) {
+            $sqlFile = $path;
+            break;
+        }
+    }
+
+    if (!$sqlFile) {
+        error_log("autoInitializeDatabase: database.sql not found in candidate paths.");
+        return;
+    }
+
+    $sql = file_get_contents($sqlFile);
+    if (empty($sql)) {
+        return;
+    }
+
+    // Strip comments
+    $lines = explode("\n", $sql);
+    $cleanLines = [];
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+        if ($trimmed === '' || strpos($trimmed, '--') === 0 || strpos($trimmed, '/*') === 0) {
+            continue;
+        }
+        $cleanLines[] = $line;
+    }
+    $cleanSql = implode("\n", $cleanLines);
+
+    // Split statements on semicolon followed by newline
+    $statements = preg_split('/;\s*[\r\n]+/', $cleanSql);
+    $executed = 0;
+    foreach ($statements as $stmt) {
+        $stmt = trim($stmt);
+        if (!empty($stmt)) {
+            try {
+                $conn->exec($stmt);
+                $executed++;
+            } catch (\Throwable $e) {
+                // Ignore harmless errors like "already exists"
+                error_log("SQL import notice: " . $e->getMessage());
+            }
+        }
+    }
+    error_log("autoInitializeDatabase: Executed $executed SQL statements from $sqlFile.");
 }
 
 function dbConnect(){
