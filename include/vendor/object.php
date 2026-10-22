@@ -1,7 +1,6 @@
-
 <?php
 
 // Get Email Settings
-require_once $_SERVER['DOCUMENT_ROOT']."/include/vendor/phpmailer/phpmailer/src/PHPMailer.php";
+require_once __DIR__ . "/phpmailer/phpmailer/src/PHPMailer.php";
 
 ?>

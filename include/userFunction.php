@@ -1,8 +1,10 @@
 <?php
 //session_start();
-require_once('config.php');
-require_once('userClass.php');
-$conn = dbConnect();
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/userClass.php';
+if (!isset($conn) || !($conn instanceof PDO)) {
+    $conn = dbConnect();
+}
 $message = new USER();
 
 function active($currect_page){

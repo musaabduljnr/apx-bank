@@ -1,8 +1,8 @@
 <?php
-include 'vendor/autoload.php';
+include_once __DIR__ . '/vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
-require_once('config.php');
-require_once($_SERVER['DOCUMENT_ROOT']."/include/smtp.php");
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/smtp.php';
 
 class USER{
     private $conn;

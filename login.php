@@ -6,6 +6,7 @@ require_once("include/loginFunction.php");
 
 if(@$_SESSION['acct_no']){
     header("Location:./user/dashboard.php");
+    exit;
 }
   
  if(isset($_POST["sub"]))  
@@ -13,15 +14,14 @@ if(@$_SESSION['acct_no']){
       $_SESSION["name"] = $_POST["name"];  
       $_SESSION['last_login_timestamp'] = time();  
       header("location:index.php");       
- }
+      exit;
+ } 
 
 
 
 if(isset($_POST['login'])){
     $login_input = inputValidation($_POST['acct_no']);
     $acct_password = inputValidation($_POST['acct_password']);
-
-
 
     $log = "SELECT * FROM users WHERE acct_no =:login_input OR acct_email =:login_input";
     $stmt = $conn->prepare($log);
@@ -31,12 +31,8 @@ if(isset($_POST['login'])){
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
     if($stmt->rowCount() === 0){
-//        toast_alert("error","Invalid login details");
-toast_alert("error","Invalid login details");
-        //notify_alert('Invalid login details','danger','2000','Close');
-
+        toast_alert("error","Invalid login details");
     }else{
         $validPassword = password_verify($acct_password, $user['acct_password']);
 
@@ -47,55 +43,44 @@ toast_alert("error","Invalid login details");
             if($user['acct_status'] === 'hold'){
                 toast_alert("error","Account on Hold, Kindly contact support to activate your account");
             }else {
+                // IP LOGIN DETAILS
+                try {
+                    $device = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown';
+                    $ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+                    $nowDate = date('Y-m-d H:i:s');
+                    $user_id = $user['id'];
+                  
+                    $stmt = $conn->prepare("INSERT INTO audit_logs (user_id,device,ipAddress,datenow) VALUES(:user_id,:device,:ipAddress,:datenow)");
+                    $stmt->execute([
+                        'user_id'=>$user_id,
+                        'device'=>$device,
+                        'ipAddress'=>$ipAddress,
+                        'datenow'=>$nowDate
+                    ]);
 
-            
-                //IP LOGIN DETAILS
-            
-            $device = $_SERVER['HTTP_USER_AGENT'];
-            $ipAddress = $_SERVER['REMOTE_ADDR'];
-            $nowDate = date('Y-m-d H:i:s');
-            $user_id = $user['id'];
-          
-            
-            $stmt = $conn->prepare("INSERT INTO audit_logs (user_id,device,ipAddress,datenow) VALUES(:user_id,:device,:ipAddress,:datenow)");
-            $stmt->execute([
-                'user_id'=>$user_id,
-                'device'=>$device,
-                'ipAddress'=>$ipAddress,
-                'datenow'=>$nowDate
-                ]);
+                    $full_name = $user['firstname']. " ". $user['lastname'];
+                    $APP_NAME = WEB_TITLE;
+                    $APP_URL = WEB_URL;
+                    $user_email = $user['acct_email'];
 
-                if (true) {
+                    $message = $sendMail->LoginMsg($full_name, $device, $ipAddress, $nowDate, $APP_NAME, $APP_URL, $BANK_PHONE);
 
-                   
-                        $full_name = $user['firstname']. " ". $user['lastname'];
-                        // $APP_URL = APP_URL;
-                        $APP_NAME = WEB_TITLE;
-                        $APP_URL = WEB_URL;
-                        $user_email = $user['acct_email'];
-
-                        $message = $sendMail->LoginMsg($full_name, $device, $ipAddress, $nowDate, $APP_NAME, $APP_URL, $BANK_PHONE);
-
-                        // User Email
-                        $subject = "Login Notification". "-". $APP_NAME;
-                        $email_message->send_mail($user_email, $message, $subject);
-                        // Admin Email
-                        $subject = "User Login Notification". "-". $APP_NAME;
-                        $email_message->send_mail(WEB_EMAIL, $message, $subject);
-                    }
-                    
-                     if (true) {
-                        $_SESSION['login'] = $user['acct_no'];
-                        header("Location:./pin.php");
-                        exit;
-                    }
+                    // User & Admin Emails
+                    $subject = "Login Notification". "-". $APP_NAME;
+                    $email_message->send_mail($user_email, $message, $subject);
+                    $subjectAdmin = "User Login Notification". "-". $APP_NAME;
+                    $email_message->send_mail(WEB_EMAIL, $message, $subjectAdmin);
+                } catch (\Throwable $e) {
+                    error_log("Login log/email error: " . $e->getMessage());
                 }
+
+                $_SESSION['login'] = $user['acct_no'];
+                echo '<script>window.location.href = "./pin.php";</script>';
+                header("Location:./pin.php");
+                exit;
             }
-
-        
+        }
     }
-
-
 }
 ?>
 

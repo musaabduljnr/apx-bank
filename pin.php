@@ -3,9 +3,11 @@ include_once("layout/header.php");
 
 if(@!$_SESSION['login']){
     header("Location:./login.php");
+    exit;
 }
 if(@$_SESSION['acct_no']){
     header('Location:./user/dashboard.php');
+    exit;
 }
 $viesConn="SELECT * FROM users WHERE acct_no = :acct_no";
 $stmt = $conn->prepare($viesConn);
@@ -15,31 +17,34 @@ $stmt->execute([
 ]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+if (!$row) {
+    header("Location:./login.php");
+    exit;
+}
+
 $user_id = $row['id'];
 $fullName = $row['firstname']." ".$row['lastname'];
 $acct_no = $row['acct_no'];
 
 
 if(isset($_POST['pin_submit'])){
-    $pinVerified = $_POST['input'];
+    $pinVerified = isset($_POST['input']) ? trim($_POST['input']) : '';
     $old_otp = $row['acct_pin'];
 
-    if($pinVerified !== $old_otp){
-//        toast_alert('error','Invalid OTP CODE');
-        notify_alert('Invalid OTP CODE','danger','2000','Close');
-    }
     if(empty($pinVerified)){
-//        toast_alert('error','Enter Your OTP');
         notify_alert('Enter Your OTP','danger','2000','Close');
-
-    }
-    if($pinVerified === $old_otp){
-        session_start();
+    } elseif($pinVerified !== $old_otp){
+        notify_alert('Invalid OTP CODE','danger','2000','Close');
+    } else {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $_SESSION['acct_no'] = $acct_no;
-        $_COOKIE['firstVisit'] = $acct_no;
+        setcookie('firstVisit', $acct_no, time() + 3600, '/');
+        echo '<script>window.location.href = "./user/dashboard.php";</script>';
         header("Location:./user/dashboard.php");
+        exit;
     }
-
 }
 ?>
                 <div class="form-container outer">
