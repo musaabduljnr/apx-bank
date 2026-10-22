@@ -24,13 +24,26 @@ function dbConnect(){
     $port       = getenv("DB_PORT") ?: "3306";
     $dns = "mysql:host=$servername;port=$port;dbname=$database;charset=utf8mb4";
 
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ];
+
+    // Enable SSL for cloud databases (TiDB, Aiven, Railway, etc.)
+    if ($servername !== "localhost" && $servername !== "127.0.0.1") {
+        if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
+            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+        }
+        if (defined('PDO::MYSQL_ATTR_SSL_CA') && file_exists('/etc/ssl/certs/ca-certificates.crt')) {
+            $options[PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs/ca-certificates.crt';
+        }
+    }
+
     try {
-        $conn = new PDO($dns, $username, $password);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $conn = new PDO($dns, $username, $password, $options);
         return $conn;
     } catch(PDOException $e) {
         error_log("Database Connection failed: " . $e->getMessage());
-        die("Database Connection failed. Please check your database configuration.");
+        die("<b>Database Connection failed:</b> " . htmlspecialchars($e->getMessage()) . "<br><br><small style='color:#777;'>Connecting to Host: <b>" . htmlspecialchars($servername) . "</b> | User: <b>" . htmlspecialchars($username) . "</b> | Database: <b>" . htmlspecialchars($database) . "</b> | Port: <b>" . htmlspecialchars($port) . "</b></small>");
     }
 }
 //return dbConnect();
