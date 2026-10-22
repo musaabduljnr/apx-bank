@@ -17,19 +17,20 @@ define("WEB_EMAIL","contact@apxbank.com"); // Change Your Website Email
 $web_url = WEB_URL;
 
 function dbConnect(){
-    $servername = "localhost";
-    $username = "root";//DATABASE USERNAME
-    $password = "";//DATABASE PASSWORD
-    $database = "bankpro";//DATABASE NAME
-    $dns = "mysql:host=$servername;dbname=$database";
+    $servername = getenv("DB_HOST") ?: "localhost";
+    $username   = getenv("DB_USER") ?: "root";
+    $password   = getenv("DB_PASS") !== false ? getenv("DB_PASS") : "";
+    $database   = getenv("DB_NAME") ?: "bankpro";
+    $port       = getenv("DB_PORT") ?: "3306";
+    $dns = "mysql:host=$servername;port=$port;dbname=$database;charset=utf8mb4";
 
     try {
         $conn = new PDO($dns, $username, $password);
-        // set the PDO error mode to exception
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $conn;
     } catch(PDOException $e) {
-        echo "Connection failed: " . $e->getMessage();
+        error_log("Database Connection failed: " . $e->getMessage());
+        die("Database Connection failed. Please check your database configuration.");
     }
 }
 //return dbConnect();
