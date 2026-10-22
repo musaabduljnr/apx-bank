@@ -1,8 +1,9 @@
 <?php
 
-// Suppress raw PHP warning/notice leaks on frontend while preserving execution
+// Display errors visibly so any failure is clear
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED);
-ini_set('display_errors', '0');
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
 ini_set('log_errors', '1');
 
 define("WEB_TITLE","APX Bank"); // Change Bank Name
@@ -16,6 +17,28 @@ define("WEB_EMAIL","contact@apxbank.com"); // Change Your Website Email
 
 $web_url = WEB_URL;
 
+function autoInitializeDatabase($conn) {
+    try {
+        $check = $conn->query("SHOW TABLES LIKE 'settings'");
+        if ($check && $check->rowCount() > 0) {
+            return;
+        }
+
+        $sqlFile = __DIR__ . "/../SQL File/database.sql";
+        if (!file_exists($sqlFile)) {
+            return;
+        }
+
+        $sql = file_get_contents($sqlFile);
+        if (!empty($sql)) {
+            $conn->exec($sql);
+            error_log("Database tables automatically imported from database.sql.");
+        }
+    } catch (\Throwable $e) {
+        error_log("Auto DB Init notice: " . $e->getMessage());
+    }
+}
+
 function dbConnect(){
     $servername = getenv("DB_HOST") ?: "localhost";
     $username   = getenv("DB_USER") ?: "root";
@@ -26,6 +49,7 @@ function dbConnect(){
 
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_MULTI_STATEMENTS => true,
     ];
 
     // Enable SSL for cloud databases (TiDB, Aiven, Railway, etc.)
@@ -40,10 +64,22 @@ function dbConnect(){
 
     try {
         $conn = new PDO($dns, $username, $password, $options);
+        autoInitializeDatabase($conn);
         return $conn;
     } catch(PDOException $e) {
         error_log("Database Connection failed: " . $e->getMessage());
-        die("<b>Database Connection failed:</b> " . htmlspecialchars($e->getMessage()) . "<br><br><small style='color:#777;'>Connecting to Host: <b>" . htmlspecialchars($servername) . "</b> | User: <b>" . htmlspecialchars($username) . "</b> | Database: <b>" . htmlspecialchars($database) . "</b> | Port: <b>" . htmlspecialchars($port) . "</b></small>");
+        die("<div style='font-family:Segoe UI,Tahoma,sans-serif;max-width:550px;margin:60px auto;padding:24px;border:1px solid #f5c6cb;background:#f8d7da;color:#721c24;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);'>"
+            . "<h2 style='margin-top:0;font-size:20px;'>Database Connection Failed</h2>"
+            . "<p style='font-size:14px;line-height:1.5;'><b>Error:</b> " . htmlspecialchars($e->getMessage()) . "</p>"
+            . "<hr style='border:0;border-top:1px solid #f1b0b7;margin:16px 0;'>"
+            . "<div style='font-size:13px;color:#491217;line-height:1.8;'>"
+            . "<b>Target Host:</b> " . htmlspecialchars($servername) . "<br>"
+            . "<b>User:</b> " . htmlspecialchars($username) . "<br>"
+            . "<b>Database:</b> " . htmlspecialchars($database) . "<br>"
+            . "<b>Port:</b> " . htmlspecialchars($port) . "<br>"
+            . "</div>"
+            . "<p style='font-size:12px;color:#666;margin-bottom:0;margin-top:16px;'>Please check the <b>DB_HOST</b>, <b>DB_USER</b>, <b>DB_PASS</b>, and <b>DB_NAME</b> environment variables in your Render Dashboard.</p>"
+            . "</div>");
     }
 }
 //return dbConnect();

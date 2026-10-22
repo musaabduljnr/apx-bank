@@ -6,25 +6,32 @@ require __DIR__."/../include/loginFunction.php";
 require_once __DIR__."/../session.php";
 // require_once("/include/UserFunction.php");
 
-$sql = "SELECT * FROM settings WHERE id ='1'";
-$stmt = $conn->prepare($sql);
-$stmt->execute();
+$pageTitle = defined('WEB_TITLE') ? WEB_TITLE : "APX Bank";
+$BANK_PHONE = "+1 (800) 123-4567";
 
-$page = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    $sql = "SELECT * FROM settings WHERE id ='1'";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $page = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($page && !empty($page['url_name'])) {
+        $pageTitle = $page['url_name'];
+    }
+    if ($page && !empty($page['url_tel'])) {
+        $BANK_PHONE = $page['url_tel'];
+    }
+} catch (\Throwable $e) {
+    error_log("Settings query error: " . $e->getMessage());
+}
 
-$title = $page['url_name'];
-
-$pageTitle = $title;
-$BANK_PHONE = $page['url_tel'];
-
-
-
-$viesConn="SELECT * FROM users";
-$stmt = $conn->prepare($viesConn);
-$stmt->execute();
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-
+try {
+    $viesConn = "SELECT * FROM users";
+    $stmt = $conn->prepare($viesConn);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (\Throwable $e) {
+    error_log("Users query error: " . $e->getMessage());
+}
 
 $title = new pageTitle();
 $email_message = new message();
