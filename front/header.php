@@ -6,23 +6,24 @@ require __DIR__."/../include/loginFunction.php";
 require_once __DIR__."/../session.php";
 // require_once("/include/UserFunction.php");
 
-$pageTitle = defined('WEB_TITLE') ? WEB_TITLE : "APX Bank";
-$BANK_PHONE = "+1 (800) 123-4567";
+if (!isset($page) || !is_array($page)) {
+    $page = getSiteSettings($conn);
+}
 
 try {
     $sql = "SELECT * FROM settings WHERE id ='1'";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
-    $page = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($page && !empty($page['url_name'])) {
-        $pageTitle = $page['url_name'];
-    }
-    if ($page && !empty($page['url_tel'])) {
-        $BANK_PHONE = $page['url_tel'];
+    $dbSettings = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($dbSettings && is_array($dbSettings)) {
+        $page = array_merge($page, array_filter($dbSettings, function($v) { return $v !== null && $v !== ''; }));
     }
 } catch (\Throwable $e) {
     error_log("Settings query error: " . $e->getMessage());
 }
+
+$pageTitle = $page['url_name'];
+$BANK_PHONE = $page['url_tel'];
 
 try {
     $viesConn = "SELECT * FROM users";

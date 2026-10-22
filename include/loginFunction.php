@@ -9,6 +9,9 @@ require_once __DIR__ . "/userFunction.php";
 
 $message = new message();
 $conn = dbConnect();
+$page = getSiteSettings($conn);
+$pageTitle = $page['url_name'];
+$BANK_PHONE = $page['url_tel'];
 
 
 

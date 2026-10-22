@@ -9,22 +9,25 @@ if(!$_SESSION['admin']) {
     die;
 }
 
-$sql = "SELECT * FROM settings WHERE id ='1'";
-$stmt = $conn->prepare($sql);
-$stmt->execute();
+if (!isset($page) || !is_array($page)) {
+    $page = getSiteSettings($conn);
+}
 
-$page = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    $sql = "SELECT * FROM settings WHERE id ='1'";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $dbSettings = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($dbSettings && is_array($dbSettings)) {
+        $page = array_merge($page, array_filter($dbSettings, function($v) { return $v !== null && $v !== ''; }));
+    }
+} catch (\Throwable $e) {
+    error_log("Settings query error: " . $e->getMessage());
+}
 
 $title = $page['url_name'];
-
 $pageTitle = $title;
 $BANK_PHONE = $page['url_tel'];
-
-$sql = "SELECT * FROM settings WHERE id ='1'";
-$stmt = $conn->prepare($sql);
-$stmt->execute();
-
-$page = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $email_message = new message();
 $sendMail = new emailMessage();

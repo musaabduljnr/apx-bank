@@ -49,7 +49,7 @@ require_once("include/loginFunction.php");
 					<div class="col-lg-5">
 						<!-- CTA Phone Number Start -->
 						<div class="cta-phone text-lg-end text-strat">
-							<h2 class="title">+<?= $page['url_tel'] ?></h2>
+							<h2 class="title">+<?= !empty($page['url_tel']) ? $page['url_tel'] : (!empty($BANK_PHONE) ? $BANK_PHONE : '18002792265') ?></h2>
 						</div>
 						<!-- CTA Phone Number Start -->
 					</div>

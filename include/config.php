@@ -1,9 +1,9 @@
 <?php
 
-// Display errors visibly so any failure is clear
+// Suppress warning/notice leaks on frontend while preserving execution and error logs
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 ini_set('log_errors', '1');
 
 define("WEB_TITLE","APX Bank"); // Change Bank Name
@@ -25,6 +25,49 @@ if (!defined("APP_URL")) {
 define("WEB_EMAIL","contact@apxbank.com"); // Change Your Website Email
 
 $web_url = WEB_URL;
+
+function getSiteSettings($conn = null) {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $defaults = [
+        'id' => 1,
+        'image' => 'logo.png',
+        'about_us' => 'APX Bank provides modern, secure, and intuitive digital banking solutions for individuals and enterprises worldwide.',
+        'url_name' => defined('WEB_TITLE') ? WEB_TITLE : 'APX Bank',
+        'url_tel' => '18002792265',
+        'url_email' => defined('WEB_EMAIL') ? WEB_EMAIL : 'contact@apxbank.com',
+        'trans_limit_min' => 500,
+        'trans_limit_max' => 500000,
+        'livechat' => '',
+        'twillio_status' => 0,
+        'billing_code' => 1,
+        'transfer' => 1,
+        'bank_deposit' => 0,
+    ];
+
+    if ($conn instanceof PDO) {
+        try {
+            $stmt = $conn->query("SELECT * FROM settings WHERE id = '1' LIMIT 1");
+            if ($stmt) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (is_array($row) && !empty($row)) {
+                    $cached = array_merge($defaults, array_filter($row, function($val) {
+                        return $val !== null && $val !== '';
+                    }));
+                    return $cached;
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log("getSiteSettings query notice: " . $e->getMessage());
+        }
+    }
+
+    $cached = $defaults;
+    return $cached;
+}
 
 function autoInitializeDatabase($conn) {
     try {
