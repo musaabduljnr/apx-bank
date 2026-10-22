@@ -179,6 +179,14 @@ function dbConnect(){
     $password   = getenv("DB_PASS") !== false ? getenv("DB_PASS") : "";
     $database   = getenv("DB_NAME") ?: "bankpro";
     $port       = getenv("DB_PORT") ?: "3306";
+
+    // System schemas (sys, mysql, information_schema, performance_schema) deny user CREATE TABLE.
+    // Automatically switch to 'test' (standard TiDB Cloud writeable database) or user database.
+    $systemSchemas = ['sys', 'mysql', 'information_schema', 'performance_schema'];
+    if (in_array(strtolower(trim($database)), $systemSchemas) || empty($database)) {
+        $database = 'test';
+    }
+
     $dns = "mysql:host=$servername;port=$port;dbname=$database;charset=utf8mb4";
 
     $options = [
