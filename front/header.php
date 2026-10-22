@@ -51,19 +51,19 @@ $sendMail = new emailMessage();
 <!--<meta name="description" content="Successfully Providing the Best Banking Solution for over 10 years." />-->
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<link href="<?= $web_url ?>/front/css/bootstrap.min.css" rel="stylesheet" />
-<link href="<?= $web_url ?>/front/css/main.css" rel="stylesheet" />
-<link href="<?= $web_url ?>/front/css/responsive.css" rel="stylesheet" />
+<link href="/front/css/bootstrap.min.css" rel="stylesheet" />
+<link href="/front/css/main.css" rel="stylesheet" />
+<link href="/front/css/responsive.css" rel="stylesheet" />
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@100;500;600;700;900&amp;family=Libre+Baskerville:wght@400;700&amp;family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
 
 <!-- Add site Favicon -->
-<link rel="icon" href="<?= $web_url ?>/front/images/favicon.png" type="image/x-icon" />
+<link rel="icon" href="/front/images/favicon.png" type="image/x-icon" />
 
 
 <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
-    <link src="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
 
 <style>

@@ -138,17 +138,17 @@
 		<span class="fa fa-arrow-circle-up"></span>
 	</div>
 
-	<script src="<?= $web_url ?>/front/js/jquery.js"></script>
-<script src="<?= $web_url ?>/front/js/popper.min.js"></script>
-<script src="<?= $web_url ?>/front/js/bootstrap.min.js"></script>
-<script src="<?= $web_url ?>/front/js/jquery.mCustomScrollbar.concat.min.js"></script>
-<script src="<?= $web_url ?>/front/js/jquery.fancybox.js"></script>
-<script src="<?= $web_url ?>/front/js/appear.js"></script>
-<script src="<?= $web_url ?>/front/js/owl.js"></script>
-<script src="<?= $web_url ?>/front/js/wow.js"></script>
-<script src="<?= $web_url ?>/front/js/validate.js"></script>
-<script src="<?= $web_url ?>/front/js/jquery-ui.js"></script>
-<script src="<?= $web_url ?>/front/js/script.js"></script>
+	<script src="/front/js/jquery.js"></script>
+<script src="/front/js/popper.min.js"></script>
+<script src="/front/js/bootstrap.min.js"></script>
+<script src="/front/js/jquery.mCustomScrollbar.concat.min.js"></script>
+<script src="/front/js/jquery.fancybox.js"></script>
+<script src="/front/js/appear.js"></script>
+<script src="/front/js/owl.js"></script>
+<script src="/front/js/wow.js"></script>
+<script src="/front/js/validate.js"></script>
+<script src="/front/js/jquery-ui.js"></script>
+<script src="/front/js/script.js"></script>
 
  <script language="javascript">
 document.onmousedown=disableclick;

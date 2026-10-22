@@ -7,9 +7,18 @@ ini_set('display_startup_errors', '1');
 ini_set('log_errors', '1');
 
 define("WEB_TITLE","APX Bank"); // Change Bank Name
-$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+
+// Properly detect HTTPS behind reverse proxies (Render, Cloudflare, etc.)
+$isHttps = (
+    (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] == 1)) ||
+    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') ||
+    (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') ||
+    (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
+    (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'onrender.com') !== false)
+);
+$protocol = $isHttps ? "https" : "http";
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : "localhost:8000";
-define("WEB_URL", "$protocol://$host"); // Dynamically matches PC or Phone IP
+define("WEB_URL", "$protocol://$host"); // Dynamically matches PC, Phone IP, or Cloud Domain
 if (!defined("APP_URL")) {
     define("APP_URL", WEB_URL . "/");
 }
