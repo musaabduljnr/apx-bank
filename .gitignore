@@ -1,0 +1,11 @@
+# OS & Archives
+.DS_Store
+__MACOSX/
+Thumbs.db
+
+# Logs
+*.log
+error_log
+
+# Temporary
+test.php
