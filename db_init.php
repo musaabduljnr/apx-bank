@@ -35,9 +35,58 @@ header('Content-Type: text/html; charset=utf-8');
         'temp_trans', 'transactions', 'users', 'v_bank', 'wire_transfer', 'withdrawal'
     ];
 
+    // Show available databases
+    $databases = [];
+    try {
+        $dbStmt = $conn->query("SHOW DATABASES");
+        if ($dbStmt) {
+            $databases = $dbStmt->fetchAll(PDO::FETCH_COLUMN);
+        }
+    } catch (\Throwable $e) {
+        $databases = ['Error: ' . $e->getMessage()];
+    }
+
+    if (isset($_POST['create_db']) && !empty($_POST['target_db'])) {
+        $target = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['target_db']);
+        try {
+            $conn->exec("CREATE DATABASE IF NOT EXISTS `$target`");
+            $conn->exec("USE `$target`");
+            echo "<div style='padding:12px;background:#dcfce7;color:#166534;border-radius:6px;margin-bottom:20px;'>Database <b>$target</b> ready.</div>";
+        } catch (\Throwable $e) {
+            echo "<div style='padding:12px;background:#fee2e2;color:#991b1b;border-radius:6px;margin-bottom:20px;'>Create DB Error: " . htmlspecialchars($e->getMessage()) . "</div>";
+        }
+    }
+
+    $errors = [];
     if (isset($_POST['init_now'])) {
-        autoInitializeDatabase($conn);
-        echo "<div style='padding:12px;background:#dcfce7;color:#166534;border-radius:6px;margin-bottom:20px;'>Initialization completed! Review the table statuses below.</div>";
+        $sqlFile = __DIR__ . "/database.sql";
+        if (file_exists($sqlFile)) {
+            $sql = file_get_contents($sqlFile);
+            $lines = explode("\n", $sql);
+            $cleanLines = [];
+            foreach ($lines as $line) {
+                $trimmed = trim($line);
+                if ($trimmed === '' || strpos($trimmed, '--') === 0 || strpos($trimmed, '/*') === 0) {
+                    continue;
+                }
+                $cleanLines[] = $line;
+            }
+            $cleanSql = implode("\n", $cleanLines);
+            $statements = preg_split('/;\s*[\r\n]+/', $cleanSql);
+            $successCount = 0;
+            foreach ($statements as $stmt) {
+                $stmt = trim($stmt);
+                if (!empty($stmt)) {
+                    try {
+                        $conn->exec($stmt);
+                        $successCount++;
+                    } catch (\Throwable $ex) {
+                        $errors[] = $ex->getMessage() . " [in: " . htmlspecialchars(substr($stmt, 0, 70)) . "]";
+                    }
+                }
+            }
+            echo "<div style='padding:12px;background:#dcfce7;color:#166534;border-radius:6px;margin-bottom:20px;'>Executed $successCount statements.</div>";
+        }
     }
 
     $existingTables = [];
@@ -57,6 +106,20 @@ header('Content-Type: text/html; charset=utf-8');
     <p>
         <strong>Connected Database:</strong> <code><?= htmlspecialchars($dbName) ?></code> on <code><?= htmlspecialchars($dbHost) ?></code>
     </p>
+    <p>
+        <strong>Available Databases on Server:</strong> <code><?= htmlspecialchars(implode(', ', $databases)) ?></code>
+    </p>
+
+    <?php if (!empty($errors)): ?>
+        <div style="background:#fff5f5;border:1px solid #fed7d7;padding:15px;border-radius:6px;margin-bottom:20px;">
+            <strong style="color:#c53030;">Import Errors:</strong>
+            <ul style="color:#742a2a;font-size:13px;margin:8px 0 0;padding-left:20px;">
+                <?php foreach (array_slice($errors, 0, 5) as $err): ?>
+                    <li><?= htmlspecialchars($err) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
 
     <table>
         <thead>
