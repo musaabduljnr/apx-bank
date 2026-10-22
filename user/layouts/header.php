@@ -48,8 +48,13 @@ $stmt->execute([
 ]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$user_id = $row['id'];
+if (!$row) {
+    unset($_SESSION['acct_no']);
+    header("Location: ../login.php");
+    exit;
+}
 
+$user_id = $row['id'];
 $acct_stat = $row['acct_status'];
 
 // // audit_logs
@@ -59,9 +64,9 @@ $stmt->execute();
 
 $logs = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$device = $logs['device'];
-$ipAddress = $logs['ipAddress'];
-$datenow = $logs['datenow'];
+$device = (is_array($logs) && isset($logs['device'])) ? $logs['device'] : 'Unknown';
+$ipAddress = (is_array($logs) && isset($logs['ipAddress'])) ? $logs['ipAddress'] : '127.0.0.1';
+$datenow = (is_array($logs) && isset($logs['datenow'])) ? $logs['datenow'] : date('Y-m-d H:i:s');
 
 
 

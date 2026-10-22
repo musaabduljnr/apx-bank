@@ -45,7 +45,11 @@ $stmt->execute([
     ':acct_no'=>$_SESSION['acct_no']
 ]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
+if (!$row) {
+    unset($_SESSION['acct_no']);
+    header("Location: ../login.php");
+    exit;
+}
 $user_id = $row['id'];
 
 $acct_stat = $row['acct_status'];

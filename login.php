@@ -90,6 +90,9 @@ if(isset($_POST['login'])){
                     }
 
                     $_SESSION['login'] = $user['acct_no'];
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_write_close();
+                    }
                     echo '<script>window.location.href = "./pin.php";</script>';
                     header("Location:./pin.php");
                     exit;

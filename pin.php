@@ -41,6 +41,9 @@ if(isset($_POST['pin_submit'])){
         }
         $_SESSION['acct_no'] = $acct_no;
         setcookie('firstVisit', $acct_no, time() + 3600, '/');
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         echo '<script>window.location.href = "./user/dashboard.php";</script>';
         header("Location:./user/dashboard.php");
         exit;
@@ -54,7 +57,7 @@ if(isset($_POST['pin_submit'])){
                                 <div class="form-content">
 
                                     <div class="d-flex user-meta">
-                                        <img src="./assets/profile/<?= $row['image']?>" class="usr-profile" alt="avatar">
+                                        <img src="./assets/profile/<?= !empty($row['image']) ? $row['image'] : 'jamesavatar.png' ?>" class="usr-profile" alt="avatar">
                                         <div class="">
                                             <p class=""><?= $fullName?></p>
                                         </div>

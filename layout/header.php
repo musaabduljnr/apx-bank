@@ -102,3 +102,4 @@ $sendMail = new emailMessage();
         }
     </style>
 </head>
+<body class="form">

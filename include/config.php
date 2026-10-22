@@ -2,14 +2,29 @@
 
 // Suppress warning/notice leaks on frontend while preserving execution and error logs
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING & ~E_DEPRECATED);
-ini_set('display_errors', '0');
-ini_set('display_startup_errors', '0');
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
 ini_set('log_errors', '1');
 
-// Fatal error handler to surface unexpected errors cleanly
+// Exception handler to surface any uncaught exceptions visibly
+set_exception_handler(function($e) {
+    while (ob_get_level() > 0) {
+        @ob_end_clean();
+    }
+    http_response_code(500);
+    echo "<div style='font-family:sans-serif;padding:30px;background:#fff5f5;color:#b00;border:2px solid #e00;margin:20px;border-radius:8px;'>";
+    echo "<h2>Application Exception</h2>";
+    echo "<p><strong>Message:</strong> " . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "<p><strong>File:</strong> " . htmlspecialchars($e->getFile()) . " on line <strong>" . $e->getLine() . "</strong></p>";
+    echo "<pre style='background:#fdf2f2;padding:12px;border-radius:4px;overflow:auto;font-size:12px;'>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
+    echo "</div>";
+});
+
+// Fatal error handler to surface unexpected fatal errors cleanly
 register_shutdown_function(function() {
     $error = error_get_last();
-    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR];
+    if ($error !== null && in_array($error['type'], $fatalTypes)) {
         while (ob_get_level() > 0) {
             @ob_end_clean();
         }
