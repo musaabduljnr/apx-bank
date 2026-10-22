@@ -121,11 +121,27 @@ header('Content-Type: text/html; charset=utf-8');
         </div>
     <?php endif; ?>
 
+    <?php
+    if (isset($_POST['rebuild_schema'])) {
+        $tables = [
+            'withdrawal', 'wire_transfer', 'v_bank', 'transactions', 'temp_trans',
+            'settings', 'messages', 'loan', 'domestic_transfer', 'deposit',
+            'crypto_currency', 'card_request', 'card', 'audit_logs', 'admin', 'users'
+        ];
+        foreach ($tables as $tbl) {
+            try { $conn->exec("DROP TABLE IF EXISTS `$tbl`"); } catch (\Throwable $e) {}
+        }
+        autoInitializeDatabase($conn);
+        echo "<div style='padding:12px;background:#dcfce7;color:#166534;border-radius:6px;margin-bottom:20px;'>Dropped and rebuilt schema with native AUTO_INCREMENT!</div>";
+    }
+    ?>
+
     <table>
         <thead>
             <tr>
                 <th>Required Table</th>
                 <th>Status</th>
+                <th>Auto-Increment</th>
             </tr>
         </thead>
         <tbody>
@@ -139,13 +155,30 @@ header('Content-Type: text/html; charset=utf-8');
                         <span class="badge badge-danger">&#10007; Missing</span>
                     <?php endif; ?>
                 </td>
+                <td>
+                    <?php
+                    $isAuto = false;
+                    try {
+                        $ai = $conn->query("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '$tbl' AND EXTRA LIKE '%auto_increment%' LIMIT 1");
+                        if ($ai && $ai->fetchColumn()) {
+                            $isAuto = true;
+                        }
+                    } catch (\Throwable $e) {}
+                    ?>
+                    <?php if ($isAuto): ?>
+                        <span class="badge badge-success">&#10003; Enabled</span>
+                    <?php else: ?>
+                        <span class="badge badge-danger">&#10007; Disabled</span>
+                    <?php endif; ?>
+                </td>
             </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
 
     <form method="POST" style="margin-top:24px;">
-        <button type="submit" name="init_now" value="1" class="btn">Import / Re-import All Tables Now</button>
+        <button type="submit" name="rebuild_schema" value="1" class="btn" style="background:#dc2626;">Rebuild Schema with AUTO_INCREMENT</button>
+        <button type="submit" name="init_now" value="1" class="btn">Import / Re-import Missing Tables</button>
         <a href="./login.php" class="btn" style="background:#64748b;margin-left:10px;">Go to Login</a>
     </form>
 </div>

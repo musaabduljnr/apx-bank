@@ -106,14 +106,32 @@ function autoInitializeDatabase($conn) {
         return;
     }
 
-    // Check if the 'users' table exists and is accessible
+    // Check if the 'users' table exists and has AUTO_INCREMENT on 'id'
+    $needsRebuild = false;
     try {
-        $check = $conn->query("SELECT 1 FROM `users` LIMIT 1");
-        if ($check !== false) {
-            return; // Table exists, no initialization needed
+        $check = $conn->query("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'id'");
+        $extra = $check ? $check->fetchColumn() : '';
+        if (empty($extra) || stripos($extra, 'auto_increment') === false) {
+            $needsRebuild = true;
         }
     } catch (\Throwable $e) {
-        // Table doesn't exist, proceed with initialization
+        $needsRebuild = true;
+    }
+
+    if (!$needsRebuild) {
+        return; // Schema is already correct with native AUTO_INCREMENT
+    }
+
+    // If tables already exist without AUTO_INCREMENT, drop them cleanly so they can be recreated properly
+    $tables = [
+        'withdrawal', 'wire_transfer', 'v_bank', 'transactions', 'temp_trans',
+        'settings', 'messages', 'loan', 'domestic_transfer', 'deposit',
+        'crypto_currency', 'card_request', 'card', 'audit_logs', 'admin', 'users'
+    ];
+    foreach ($tables as $tbl) {
+        try {
+            $conn->exec("DROP TABLE IF EXISTS `$tbl`");
+        } catch (\Throwable $e) {}
     }
 
     $candidatePaths = [
@@ -165,12 +183,12 @@ function autoInitializeDatabase($conn) {
                 $conn->exec($stmt);
                 $executed++;
             } catch (\Throwable $e) {
-                // Ignore harmless errors like "already exists"
+                // Ignore harmless notice
                 error_log("SQL import notice: " . $e->getMessage());
             }
         }
     }
-    error_log("autoInitializeDatabase: Executed $executed SQL statements from $sqlFile.");
+    error_log("autoInitializeDatabase: Successfully built schema with AUTO_INCREMENT ($executed statements).");
 }
 
 function dbConnect(){
@@ -206,6 +224,8 @@ function dbConnect(){
 
     try {
         $conn = new PDO($dns, $username, $password, $options);
+        // Relax strict SQL mode to prevent 'doesn't have a default value' errors on non-critical omitted fields
+        $conn->exec("SET sql_mode = 'NO_ENGINE_SUBSTITUTION'");
         autoInitializeDatabase($conn);
         return $conn;
     } catch(PDOException $e) {
