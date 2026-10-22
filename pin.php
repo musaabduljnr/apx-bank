@@ -70,7 +70,7 @@ if(isset($_POST['pin_submit'])){
 
                                     <form class="text-left" method="post" >
                                         <div class="form">
-                                            <div \ class="field-wrapper input mb-2">
+                                            <div class="field-wrapper input mb-2">
 
                                                 <div class="d-flex justify-content-between">
 

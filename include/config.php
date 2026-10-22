@@ -6,6 +6,23 @@ ini_set('display_errors', '0');
 ini_set('display_startup_errors', '0');
 ini_set('log_errors', '1');
 
+// Fatal error handler to surface unexpected errors cleanly
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        while (ob_get_level() > 0) {
+            @ob_end_clean();
+        }
+        http_response_code(500);
+        header('Content-Type: text/html');
+        echo "<div style='font-family:sans-serif;padding:30px;background:#fff5f5;color:#b00;border:2px solid #e00;margin:20px;border-radius:8px;'>";
+        echo "<h2>Application Error</h2>";
+        echo "<p><strong>Message:</strong> " . htmlspecialchars($error['message']) . "</p>";
+        echo "<p><strong>File:</strong> " . htmlspecialchars($error['file']) . " on line <strong>" . $error['line'] . "</strong></p>";
+        echo "</div>";
+    }
+});
+
 define("WEB_TITLE","APX Bank"); // Change Bank Name
 
 // Properly detect HTTPS behind reverse proxies (Render, Cloudflare, etc.)

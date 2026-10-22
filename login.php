@@ -20,65 +20,88 @@ if(@$_SESSION['acct_no']){
 
 
 if(isset($_POST['login'])){
-    $login_input = inputValidation($_POST['acct_no']);
-    $acct_password = inputValidation($_POST['acct_password']);
+    try {
+        require_once __DIR__ . "/include/userFunction.php";
+        
+        $login_input = isset($_POST['acct_no']) ? inputValidation($_POST['acct_no']) : '';
+        $acct_password = isset($_POST['acct_password']) ? $_POST['acct_password'] : '';
 
-    $log = "SELECT * FROM users WHERE acct_no =:login_input OR acct_email =:login_input";
-    $stmt = $conn->prepare($log);
-    $stmt->execute([
-        'login_input'=>$login_input
-    ]);
+        $log = "SELECT * FROM users WHERE acct_no =:login_input OR acct_email =:login_input";
+        $stmt = $conn->prepare($log);
+        $stmt->execute([
+            'login_input'=>$login_input
+        ]);
 
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if($stmt->rowCount() === 0){
-        toast_alert("error","Invalid login details");
-    }else{
-        $validPassword = password_verify($acct_password, $user['acct_password']);
-
-        if ($validPassword === false){
-           toast_alert("error","Invalid login details");
-        }else{
-
-            if($user['acct_status'] === 'hold'){
-                toast_alert("error","Account on Hold, Kindly contact support to activate your account");
-            }else {
-                // IP LOGIN DETAILS
-                try {
-                    $device = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown';
-                    $ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
-                    $nowDate = date('Y-m-d H:i:s');
-                    $user_id = $user['id'];
-                  
-                    $stmt = $conn->prepare("INSERT INTO audit_logs (user_id,device,ipAddress,datenow) VALUES(:user_id,:device,:ipAddress,:datenow)");
-                    $stmt->execute([
-                        'user_id'=>$user_id,
-                        'device'=>$device,
-                        'ipAddress'=>$ipAddress,
-                        'datenow'=>$nowDate
-                    ]);
-
-                    $full_name = $user['firstname']. " ". $user['lastname'];
-                    $APP_NAME = WEB_TITLE;
-                    $APP_URL = WEB_URL;
-                    $user_email = $user['acct_email'];
-
-                    $message = $sendMail->LoginMsg($full_name, $device, $ipAddress, $nowDate, $APP_NAME, $APP_URL, $BANK_PHONE);
-
-                    // User & Admin Emails
-                    $subject = "Login Notification". "-". $APP_NAME;
-                    $email_message->send_mail($user_email, $message, $subject);
-                    $subjectAdmin = "User Login Notification". "-". $APP_NAME;
-                    $email_message->send_mail(WEB_EMAIL, $message, $subjectAdmin);
-                } catch (\Throwable $e) {
-                    error_log("Login log/email error: " . $e->getMessage());
-                }
-
-                $_SESSION['login'] = $user['acct_no'];
-                echo '<script>window.location.href = "./pin.php";</script>';
-                header("Location:./pin.php");
-                exit;
+        if($stmt->rowCount() === 0){
+            if (function_exists('toast_alert')) {
+                toast_alert("error","Invalid login details");
+            } else {
+                echo "<script>alert('Invalid login details');</script>";
             }
+        }else{
+            $validPassword = password_verify($acct_password, $user['acct_password']);
+
+            if ($validPassword === false){
+                if (function_exists('toast_alert')) {
+                    toast_alert("error","Invalid login details");
+                } else {
+                    echo "<script>alert('Invalid login details');</script>";
+                }
+            }else{
+
+                if($user['acct_status'] === 'hold'){
+                    if (function_exists('toast_alert')) {
+                        toast_alert("error","Account on Hold, Kindly contact support to activate your account");
+                    } else {
+                        echo "<script>alert('Account on Hold, Kindly contact support to activate your account');</script>";
+                    }
+                }else {
+                    // IP LOGIN DETAILS
+                    try {
+                        $device = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown';
+                        $ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+                        $nowDate = date('Y-m-d H:i:s');
+                        $user_id = $user['id'];
+                      
+                        $stmt = $conn->prepare("INSERT INTO audit_logs (user_id,device,ipAddress,datenow) VALUES(:user_id,:device,:ipAddress,:datenow)");
+                        $stmt->execute([
+                            'user_id'=>$user_id,
+                            'device'=>$device,
+                            'ipAddress'=>$ipAddress,
+                            'datenow'=>$nowDate
+                        ]);
+
+                        $full_name = $user['firstname']. " ". $user['lastname'];
+                        $APP_NAME = WEB_TITLE;
+                        $APP_URL = WEB_URL;
+                        $user_email = $user['acct_email'];
+
+                        $message = $sendMail->LoginMsg($full_name, $device, $ipAddress, $nowDate, $APP_NAME, $APP_URL, $BANK_PHONE);
+
+                        // User & Admin Emails
+                        $subject = "Login Notification". "-". $APP_NAME;
+                        $email_message->send_mail($user_email, $message, $subject);
+                        $subjectAdmin = "User Login Notification". "-". $APP_NAME;
+                        $email_message->send_mail(WEB_EMAIL, $message, $subjectAdmin);
+                    } catch (\Throwable $e) {
+                        error_log("Login log/email error: " . $e->getMessage());
+                    }
+
+                    $_SESSION['login'] = $user['acct_no'];
+                    echo '<script>window.location.href = "./pin.php";</script>';
+                    header("Location:./pin.php");
+                    exit;
+                }
+            }
+        }
+    } catch (\Throwable $e) {
+        error_log("Login processing error: " . $e->getMessage());
+        if (function_exists('toast_alert')) {
+            toast_alert("error", "Unable to complete login. Please try again: " . htmlspecialchars($e->getMessage()));
+        } else {
+            echo "<script>alert('Login error: " . addslashes($e->getMessage()) . "');</script>";
         }
     }
 }
