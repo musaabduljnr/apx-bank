@@ -58,50 +58,53 @@ define("WEB_EMAIL","contact@apxbank.com"); // Change Your Website Email
 
 $web_url = WEB_URL;
 
-function getSiteSettings($conn = null) {
-    static $cached = null;
-    if ($cached !== null) {
+if (!function_exists('getSiteSettings')) {
+    function getSiteSettings($conn = null) {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $defaults = [
+            'id' => 1,
+            'image' => 'logo.png',
+            'about_us' => 'APX Bank provides modern, secure, and intuitive digital banking solutions for individuals and enterprises worldwide.',
+            'url_name' => defined('WEB_TITLE') ? WEB_TITLE : 'APX Bank',
+            'url_tel' => '18002792265',
+            'url_email' => defined('WEB_EMAIL') ? WEB_EMAIL : 'contact@apxbank.com',
+            'trans_limit_min' => 500,
+            'trans_limit_max' => 500000,
+            'livechat' => '',
+            'twillio_status' => 0,
+            'billing_code' => 1,
+            'transfer' => 1,
+            'bank_deposit' => 0,
+        ];
+
+        if ($conn instanceof PDO) {
+            try {
+                $stmt = $conn->query("SELECT * FROM settings WHERE id = '1' LIMIT 1");
+                if ($stmt) {
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if (is_array($row) && !empty($row)) {
+                        $cached = array_merge($defaults, array_filter($row, function($val) {
+                            return $val !== null && $val !== '';
+                        }));
+                        return $cached;
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log("getSiteSettings query notice: " . $e->getMessage());
+            }
+        }
+
+        $cached = $defaults;
         return $cached;
     }
-
-    $defaults = [
-        'id' => 1,
-        'image' => 'logo.png',
-        'about_us' => 'APX Bank provides modern, secure, and intuitive digital banking solutions for individuals and enterprises worldwide.',
-        'url_name' => defined('WEB_TITLE') ? WEB_TITLE : 'APX Bank',
-        'url_tel' => '18002792265',
-        'url_email' => defined('WEB_EMAIL') ? WEB_EMAIL : 'contact@apxbank.com',
-        'trans_limit_min' => 500,
-        'trans_limit_max' => 500000,
-        'livechat' => '',
-        'twillio_status' => 0,
-        'billing_code' => 1,
-        'transfer' => 1,
-        'bank_deposit' => 0,
-    ];
-
-    if ($conn instanceof PDO) {
-        try {
-            $stmt = $conn->query("SELECT * FROM settings WHERE id = '1' LIMIT 1");
-            if ($stmt) {
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if (is_array($row) && !empty($row)) {
-                    $cached = array_merge($defaults, array_filter($row, function($val) {
-                        return $val !== null && $val !== '';
-                    }));
-                    return $cached;
-                }
-            }
-        } catch (\Throwable $e) {
-            error_log("getSiteSettings query notice: " . $e->getMessage());
-        }
-    }
-
-    $cached = $defaults;
-    return $cached;
 }
 
-function autoInitializeDatabase($conn) {
+if (!function_exists('autoInitializeDatabase')) {
+    function autoInitializeDatabase($conn) {
     if (!($conn instanceof PDO)) {
         return;
     }
@@ -188,65 +191,69 @@ function autoInitializeDatabase($conn) {
             }
         }
     }
-    error_log("autoInitializeDatabase: Successfully built schema with AUTO_INCREMENT ($executed statements).");
-}
-
-function dbConnect(){
-    $servername = getenv("DB_HOST") ?: "localhost";
-    $username   = getenv("DB_USER") ?: "root";
-    $password   = getenv("DB_PASS") !== false ? getenv("DB_PASS") : "";
-    $database   = getenv("DB_NAME") ?: "bankpro";
-    $port       = getenv("DB_PORT") ?: "3306";
-
-    // System schemas (sys, mysql, information_schema, performance_schema) deny user CREATE TABLE.
-    // Automatically switch to 'test' (standard TiDB Cloud writeable database) or user database.
-    $systemSchemas = ['sys', 'mysql', 'information_schema', 'performance_schema'];
-    if (in_array(strtolower(trim($database)), $systemSchemas) || empty($database)) {
-        $database = 'test';
-    }
-
-    $dns = "mysql:host=$servername;port=$port;dbname=$database;charset=utf8mb4";
-
-    $options = [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::MYSQL_ATTR_MULTI_STATEMENTS => true,
-    ];
-
-    // Enable SSL for cloud databases (TiDB, Aiven, Railway, etc.)
-    if ($servername !== "localhost" && $servername !== "127.0.0.1") {
-        if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
-            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-        }
-        if (defined('PDO::MYSQL_ATTR_SSL_CA') && file_exists('/etc/ssl/certs/ca-certificates.crt')) {
-            $options[PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs/ca-certificates.crt';
-        }
-    }
-
-    try {
-        $conn = new PDO($dns, $username, $password, $options);
-        // Relax strict SQL mode to prevent 'doesn't have a default value' errors on non-critical omitted fields
-        $conn->exec("SET sql_mode = 'NO_ENGINE_SUBSTITUTION'");
-        autoInitializeDatabase($conn);
-        return $conn;
-    } catch(PDOException $e) {
-        error_log("Database Connection failed: " . $e->getMessage());
-        die("<div style='font-family:Segoe UI,Tahoma,sans-serif;max-width:550px;margin:60px auto;padding:24px;border:1px solid #f5c6cb;background:#f8d7da;color:#721c24;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);'>"
-            . "<h2 style='margin-top:0;font-size:20px;'>Database Connection Failed</h2>"
-            . "<p style='font-size:14px;line-height:1.5;'><b>Error:</b> " . htmlspecialchars($e->getMessage()) . "</p>"
-            . "<hr style='border:0;border-top:1px solid #f1b0b7;margin:16px 0;'>"
-            . "<div style='font-size:13px;color:#491217;line-height:1.8;'>"
-            . "<b>Target Host:</b> " . htmlspecialchars($servername) . "<br>"
-            . "<b>User:</b> " . htmlspecialchars($username) . "<br>"
-            . "<b>Database:</b> " . htmlspecialchars($database) . "<br>"
-            . "<b>Port:</b> " . htmlspecialchars($port) . "<br>"
-            . "</div>"
-            . "<p style='font-size:12px;color:#666;margin-bottom:0;margin-top:16px;'>Please check the <b>DB_HOST</b>, <b>DB_USER</b>, <b>DB_PASS</b>, and <b>DB_NAME</b> environment variables in your Render Dashboard.</p>"
-            . "</div>");
+        error_log("autoInitializeDatabase: Successfully built schema with AUTO_INCREMENT ($executed statements).");
     }
 }
-//return dbConnect();
 
-function inputValidation($value): string
-{
-    return trim(htmlspecialchars(htmlentities($value)));
+if (!function_exists('dbConnect')) {
+    function dbConnect(){
+        $servername = getenv("DB_HOST") ?: "localhost";
+        $username   = getenv("DB_USER") ?: "root";
+        $password   = getenv("DB_PASS") !== false ? getenv("DB_PASS") : "";
+        $database   = getenv("DB_NAME") ?: "bankpro";
+        $port       = getenv("DB_PORT") ?: "3306";
+
+        // System schemas (sys, mysql, information_schema, performance_schema) deny user CREATE TABLE.
+        // Automatically switch to 'test' (standard TiDB Cloud writeable database) or user database.
+        $systemSchemas = ['sys', 'mysql', 'information_schema', 'performance_schema'];
+        if (in_array(strtolower(trim($database)), $systemSchemas) || empty($database)) {
+            $database = 'test';
+        }
+
+        $dns = "mysql:host=$servername;port=$port;dbname=$database;charset=utf8mb4";
+
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::MYSQL_ATTR_MULTI_STATEMENTS => true,
+        ];
+
+        // Enable SSL for cloud databases (TiDB, Aiven, Railway, etc.)
+        if ($servername !== "localhost" && $servername !== "127.0.0.1") {
+            if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
+                $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+            }
+            if (defined('PDO::MYSQL_ATTR_SSL_CA') && file_exists('/etc/ssl/certs/ca-certificates.crt')) {
+                $options[PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs/ca-certificates.crt';
+            }
+        }
+
+        try {
+            $conn = new PDO($dns, $username, $password, $options);
+            // Relax strict SQL mode to prevent 'doesn't have a default value' errors on non-critical omitted fields
+            $conn->exec("SET sql_mode = 'NO_ENGINE_SUBSTITUTION'");
+            autoInitializeDatabase($conn);
+            return $conn;
+        } catch(PDOException $e) {
+            error_log("Database Connection failed: " . $e->getMessage());
+            die("<div style='font-family:Segoe UI,Tahoma,sans-serif;max-width:550px;margin:60px auto;padding:24px;border:1px solid #f5c6cb;background:#f8d7da;color:#721c24;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);'>"
+                . "<h2 style='margin-top:0;font-size:20px;'>Database Connection Failed</h2>"
+                . "<p style='font-size:14px;line-height:1.5;'><b>Error:</b> " . htmlspecialchars($e->getMessage()) . "</p>"
+                . "<hr style='border:0;border-top:1px solid #f1b0b7;margin:16px 0;'>"
+                . "<div style='font-size:13px;color:#491217;line-height:1.8;'>"
+                . "<b>Target Host:</b> " . htmlspecialchars($servername) . "<br>"
+                . "<b>User:</b> " . htmlspecialchars($username) . "<br>"
+                . "<b>Database:</b> " . htmlspecialchars($database) . "<br>"
+                . "<b>Port:</b> " . htmlspecialchars($port) . "<br>"
+                . "</div>"
+                . "<p style='font-size:12px;color:#666;margin-bottom:0;margin-top:16px;'>Please check the <b>DB_HOST</b>, <b>DB_USER</b>, <b>DB_PASS</b>, and <b>DB_NAME</b> environment variables in your Render Dashboard.</p>"
+                . "</div>");
+        }
+    }
+}
+
+if (!function_exists('inputValidation')) {
+    function inputValidation($value): string
+    {
+        return trim(htmlspecialchars(htmlentities($value)));
+    }
 }

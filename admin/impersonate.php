@@ -4,10 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . "/include/adminloginFunction.php";
 require_once __DIR__ . "/include/session.php";
 require_once __DIR__ . "/../include/config.php";
-require_once __DIR__ . "/../include/userFunction.php";
 
 // 1. Verify admin authorization
 if (empty($_SESSION['admin'])) {

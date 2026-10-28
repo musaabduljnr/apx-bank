@@ -1,43 +1,47 @@
 <?php
 
-function getCardStatus($status){
-    if (!is_array($status) || !isset($status['card_status'])) {
+if (!function_exists('getCardStatus')) {
+    function getCardStatus($status){
+        if (!is_array($status) || !isset($status['card_status'])) {
+            return '';
+        }
+        if($status['card_status']==='1'){
+            return '<button class="btn btn-success btn-sm">ACTIVE</button>';
+        }elseif($status['card_status']==='2'){
+            return '<button class="btn btn-primary btn-sm ">PROCESSING</button>';
+        }elseif($status['card_status']==='3'){
+            return '<button class="btn btn-danger btn-sm">ON HOLD</button>';
+        }elseif($status['card_status']==='4'){
+            return '<button class="btn btn-danger btn-sm">PAUSE</button>';
+        }
         return '';
     }
-    if($status['card_status']==='1'){
-        return '<button class="btn btn-success btn-sm">ACTIVE</button>';
-    }elseif($status['card_status']==='2'){
-        return '<button class="btn btn-primary btn-sm ">PROCESSING</button>';
-    }elseif($status['card_status']==='3'){
-        return '<button class="btn btn-danger btn-sm">ON HOLD</button>';
-    }elseif($status['card_status']==='4'){
-        return '<button class="btn btn-danger btn-sm">PAUSE</button>';
-    }
-    return '';
 }
 
-function cardTypeName($card_number){
-    if (!is_array($card_number) || empty($card_number[0])) {
-        return "UNKNOWN";
-    }
-    if (substr($card_number[0],'0','2')==='52'){
-        return "MASTER";
-    }elseif (substr($card_number[0],'0','2')==='40'){
-        return "VISA";
-    }elseif (substr($card_number[0],'0','2')==='67'){
-        return "MAESTRO";
-    }elseif(substr($card_number[0],'0','2')==='30'){
-        return "DINERS";
-    }elseif(substr($card_number[0],'0','2')==='62'){
-        return "UNIONPAY";
-    }elseif(substr($card_number[0],'0','2')==='37'){
-        return "AMERICAN EXPRESS";
-    }elseif(substr($card_number[0],'0','2')==='60'){
-        return "DISCOVER";
-    }elseif(substr($card_number[0],'0','2')==='35'){
-        return "JCB";
-    }else{
-        return "INVALID";
+if (!function_exists('cardTypeName')) {
+    function cardTypeName($card_number){
+        if (!is_array($card_number) || empty($card_number[0])) {
+            return "UNKNOWN";
+        }
+        if (substr($card_number[0],'0','2')==='52'){
+            return "MASTER";
+        }elseif (substr($card_number[0],'0','2')==='40'){
+            return "VISA";
+        }elseif (substr($card_number[0],'0','2')==='67'){
+            return "MAESTRO";
+        }elseif(substr($card_number[0],'0','2')==='30'){
+            return "DINERS";
+        }elseif(substr($card_number[0],'0','2')==='62'){
+            return "UNIONPAY";
+        }elseif(substr($card_number[0],'0','2')==='37'){
+            return "AMERICAN EXPRESS";
+        }elseif(substr($card_number[0],'0','2')==='60'){
+            return "DISCOVER";
+        }elseif(substr($card_number[0],'0','2')==='35'){
+            return "JCB";
+        }else{
+            return "INVALID";
+        }
     }
 }
 
