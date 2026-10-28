@@ -186,8 +186,23 @@ CREATE TABLE IF NOT EXISTS `users` (
   `mgr_id` text DEFAULT NULL,
   `mgr_image` text DEFAULT NULL,
   `acct_address` text DEFAULT NULL,
+  `tx_freeze_until` datetime DEFAULT NULL,
+  `tx_freeze_reason` text DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_devices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` int(11) NOT NULL DEFAULT 0,
+  `device_fingerprint` varchar(64) NOT NULL,
+  `device_name` text DEFAULT NULL,
+  `ip_address` varchar(200) NOT NULL DEFAULT '127.0.0.1',
+  `first_login` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_login` datetime NOT NULL DEFAULT current_timestamp(),
+  `is_trusted` tinyint(1) NOT NULL DEFAULT 1,
+  INDEX (`user_id`),
+  INDEX (`device_fingerprint`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `v_bank` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,

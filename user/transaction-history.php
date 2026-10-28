@@ -72,6 +72,12 @@ foreach ($allTransactions as $t) {
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
 
+        <?php
+        if (!empty($is_frozen)) {
+            echo renderTransactionFreezeNotice($freezeStatus);
+        }
+        ?>
+
         <div class="page-header" style="padding: 20px 0 10px 0;">
             <div class="page-title">
                 <h3 style="margin: 0; font-weight: 700; color: #3b3f5c;">Transaction History</h3>

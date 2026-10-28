@@ -4,6 +4,9 @@ $email = $row['acct_email'];
 $account_id =$row['id'];
 
 if(isset($_POST['wire_transfer'])){
+    if (function_exists('assertTransactionsAllowed') && !assertTransactionsAllowed($row)) {
+        return;
+    }
 
     $amount = inputValidation($_POST['amount']);
     $acct_name = inputValidation($_POST['acct_name']);
@@ -144,6 +147,9 @@ if(isset($_POST['wire_transfer'])){
 
 
 if (isset($_POST['cot_submit'])){
+    if (function_exists('assertTransactionsAllowed') && !assertTransactionsAllowed($row)) {
+        return;
+    }
     $cotCode = $_POST['cot_code'];
     $acct_cot = $row['acct_cot'];
 
@@ -156,6 +162,9 @@ if (isset($_POST['cot_submit'])){
 }
 
 if (isset($_POST['tax_submit'])){
+    if (function_exists('assertTransactionsAllowed') && !assertTransactionsAllowed($row)) {
+        return;
+    }
     $taxCode = $_POST['tax_code'];
     $acct_tax = $row['acct_tax'];
 
@@ -169,6 +178,9 @@ if (isset($_POST['tax_submit'])){
 
 
 if (isset($_POST['imf_submit'])){
+    if (function_exists('assertTransactionsAllowed') && !assertTransactionsAllowed($row)) {
+        return;
+    }
     $imf_code = $_POST['imf_code'];
     $imf = $row['acct_imf'];
     $amount = $temp_trans['amount'];
@@ -205,6 +217,9 @@ if (isset($_POST['imf_submit'])){
 }
 
 if(isset($_POST['submit-pin'])){
+    if (function_exists('assertTransactionsAllowed') && !assertTransactionsAllowed($row)) {
+        return;
+    }
     $pin = inputValidation($_POST['pin']);
     $oldPin = inputValidation($row['acct_otp']);
     $acct_amount = inputValidation($row['acct_balance']);
@@ -276,6 +291,9 @@ if(isset($_POST['submit-pin'])){
 
 
 if(isset($_POST['domestic-transfer'])){
+    if (function_exists('assertTransactionsAllowed') && !assertTransactionsAllowed($row)) {
+        return;
+    }
 
     $amount = $_POST['amount'];
     $acct_name = $_POST['acct_name'];

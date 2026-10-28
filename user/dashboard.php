@@ -19,6 +19,12 @@ unset($_SESSION['wire_transfer'], $_SESSION['dom_transfer']);
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
 
+        <?php
+        if (!empty($is_frozen)) {
+            echo renderTransactionFreezeNotice($freezeStatus);
+        }
+        ?>
+
         <div class="row layout-top-spacing">
 
             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-4 layout-spacing layout-visible">

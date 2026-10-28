@@ -126,7 +126,7 @@ function autoInitializeDatabase($conn) {
     $tables = [
         'withdrawal', 'wire_transfer', 'v_bank', 'transactions', 'temp_trans',
         'settings', 'messages', 'loan', 'domestic_transfer', 'deposit',
-        'crypto_currency', 'card_request', 'card', 'audit_logs', 'admin', 'users'
+        'crypto_currency', 'card_request', 'card', 'audit_logs', 'admin', 'user_devices', 'users'
     ];
     foreach ($tables as $tbl) {
         try {

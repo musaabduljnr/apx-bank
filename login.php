@@ -73,6 +73,11 @@ if(isset($_POST['login'])){
                             'datenow'=>$nowDate
                         ]);
 
+                        // Check for New Device and activate 72-hour transaction security freeze if detected
+                        if (function_exists('handleNewDeviceCheckOnLogin')) {
+                            handleNewDeviceCheckOnLogin($conn, $user);
+                        }
+
                         $full_name = $user['firstname']. " ". $user['lastname'];
                         $APP_NAME = WEB_TITLE;
                         $APP_URL = WEB_URL;

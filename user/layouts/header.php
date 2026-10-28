@@ -68,6 +68,10 @@ $device = (is_array($logs) && isset($logs['device'])) ? $logs['device'] : 'Unkno
 $ipAddress = (is_array($logs) && isset($logs['ipAddress'])) ? $logs['ipAddress'] : '127.0.0.1';
 $datenow = (is_array($logs) && isset($logs['datenow'])) ? $logs['datenow'] : date('Y-m-d H:i:s');
 
+// 72-Hour New Device Transaction Freeze Status
+$freezeStatus = function_exists('getTransactionFreezeStatus') ? getTransactionFreezeStatus($row) : ['is_frozen' => false];
+$is_frozen = !empty($freezeStatus['is_frozen']);
+
 
 
 
@@ -202,6 +206,11 @@ if ($row['acct_currency'] === 'USD') {
 </head>
 
 <body class="sidebar-noneoverflow">
+    <?php
+    if (function_exists('renderAdminImpersonationBanner')) {
+        echo renderAdminImpersonationBanner($row, isset($freezeStatus) ? $freezeStatus : null);
+    }
+    ?>
     <!-- BEGIN LOADER -->
     <div id="load_screen">
         <div class="loader">

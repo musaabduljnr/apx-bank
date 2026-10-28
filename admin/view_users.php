@@ -293,10 +293,65 @@ if(isset($_POST['transfer'])){
 die;
 }
 
+if(isset($_POST['lift_freeze'])){
+    $stmt = $conn->prepare("UPDATE users SET tx_freeze_until = NULL, tx_freeze_reason = NULL WHERE id = :id");
+    $stmt->execute(['id'=>$id]);
+    toast_alert('success', '72-Hour Security Hold Lifted Successfully', 'Security Updated');
+    echo "<script>window.location.href='./view_users.php?id=$id';</script>";
+    exit;
+}
+
+if(isset($_POST['apply_freeze'])){
+    $freezeUntil = date('Y-m-d H:i:s', time() + (72 * 3600));
+    $stmt = $conn->prepare("UPDATE users SET tx_freeze_until = :until, tx_freeze_reason = 'Manual Security Hold applied by Administrator' WHERE id = :id");
+    $stmt->execute(['until'=>$freezeUntil, 'id'=>$id]);
+    toast_alert('warning', '72-Hour Security Freeze Applied Successfully', 'Account Frozen');
+    echo "<script>window.location.href='./view_users.php?id=$id';</script>";
+    exit;
+}
+
 ?>
 <!--  BEGIN CONTENT AREA  -->
 <div id="content" class="main-content">
     <div class="layout-px-spacing">
+
+        <!-- Live User Interface View & Diagnostics Hero Card -->
+        <div class="row layout-top-spacing mb-2">
+            <div class="col-xl-12 col-lg-12 col-md-12">
+                <div class="widget-content widget-content-area br-6" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid #334155; border-radius: 10px; padding: 20px 24px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="d-flex align-items-center mb-2 mb-md-0">
+                            <div style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; margin-right: 18px; flex-shrink: 0;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-external-link"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <h5 style="margin: 0; color: #f8fafc; font-weight: 700; font-size: 18px;">
+                                        User Interface View & Diagnostics
+                                    </h5>
+                                    <span class="badge badge-info ml-2" style="font-size: 11px; padding: 3px 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Live Impersonation</span>
+                                    <?php if (!empty($row['acct_status'])): ?>
+                                        <span class="badge badge-<?= $row['acct_status'] === 'active' ? 'success' : 'danger' ?> ml-1" style="font-size: 11px; text-transform: uppercase;">
+                                            Status: <?= htmlspecialchars($row['acct_status']) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 13.5px; line-height: 1.4;">
+                                    Directly access <strong><?= htmlspecialchars($row['firstname'] . ' ' . $row['lastname']) ?></strong>'s interface (Acct: <code style="color: #38bdf8; background: rgba(56,189,248,0.1); padding: 1px 5px; border-radius: 3px;"><?= htmlspecialchars($row['acct_no']) ?></code>) to inspect balances, test transfer forms, and troubleshoot user issues in real-time.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-2 mt-md-0">
+                            <a href="./impersonate.php?id=<?= $row['id'] ?>" class="btn btn-primary" style="background: linear-gradient(90deg, #0284c7 0%, #2563eb 100%); border: none; font-weight: 600; padding: 11px 22px; border-radius: 6px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); display: inline-flex; align-items: center; gap: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-in"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                                <span>Enter User Portal</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="account-settings-container layout-top-spacing">
 
             <div class="account-content">
@@ -522,6 +577,38 @@ die;
                                             </div>
                                         </div>
 
+                                    </div>
+
+                                    <!-- 72-Hour New Device Transaction Freeze Manager -->
+                                    <div class="row mt-4 pt-3" style="border-top: 1px dashed #e0e6ed;">
+                                        <div class="col-md-12">
+                                            <?php
+                                            $freezeInfo = function_exists('getTransactionFreezeStatus') ? getTransactionFreezeStatus($row) : ['is_frozen' => false];
+                                            $isFrozen = !empty($freezeInfo['is_frozen']);
+                                            ?>
+                                            <div class="p-3" style="background: <?= $isFrozen ? '#fff7ed' : '#f0fdf4' ?>; border: 1px solid <?= $isFrozen ? '#f97316' : '#22c55e' ?>; border-radius: 8px;">
+                                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                                    <div>
+                                                        <h6 style="margin: 0; font-weight: 700; color: <?= $isFrozen ? '#9a3412' : '#166534' ?>;">
+                                                            🛡️ 72-Hour New Device Transaction Freeze: 
+                                                            <span class="badge <?= $isFrozen ? 'badge-danger' : 'badge-success' ?>">
+                                                                <?= $isFrozen ? 'ACTIVE (FROZEN)' : 'INACTIVE (NORMAL)' ?>
+                                                            </span>
+                                                        </h6>
+                                                        <small style="color: #64748b;">
+                                                            <?= $isFrozen ? 'Account transactions restricted until: <b>' . htmlspecialchars($freezeInfo['lifts_at']) . '</b> (' . $freezeInfo['formatted_remaining'] . ' remaining)' : 'No active security freeze. Outgoing transactions allowed.' ?>
+                                                        </small>
+                                                    </div>
+                                                    <div class="mt-2 mt-sm-0">
+                                                        <?php if ($isFrozen): ?>
+                                                            <button type="submit" name="lift_freeze" class="btn btn-success btn-sm">Lift Security Hold</button>
+                                                        <?php else: ?>
+                                                            <button type="submit" name="apply_freeze" class="btn btn-warning btn-sm">Apply 72h Security Freeze</button>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                 </div>

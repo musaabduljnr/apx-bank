@@ -52,8 +52,12 @@ include_once("./layout/header.php");
                                 <td><?= $row['acct_type'] ?></td>
                                 <td><?= $row['acct_status'] ?></td>
                                 <td><?= $row['acct_email'] ?></td>
-                                <!--<td><?= $row['country'] ?></td>-->
-                                <td class="text-center"><a href="./view_users.php?id=<?php echo $row['id']; ?>" class="btn btn-primary">View</a> </td>
+                                <td class="text-center" style="white-space: nowrap;">
+                                    <a href="./view_users.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm">Edit</a>
+                                    <a href="./impersonate.php?id=<?php echo $row['id']; ?>" class="btn btn-info btn-sm ml-1" title="Login as User & Diagnose Portal">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> Portal
+                                    </a>
+                                </td>
                                 
                                 
                         <!--<td class="text-center"><form class="section about" method="POST">-->

@@ -32,7 +32,7 @@ header('Content-Type: text/html; charset=utf-8');
     $expectedTables = [
         'admin', 'audit_logs', 'card', 'card_request', 'crypto_currency',
         'deposit', 'domestic_transfer', 'loan', 'messages', 'settings',
-        'temp_trans', 'transactions', 'users', 'v_bank', 'wire_transfer', 'withdrawal'
+        'temp_trans', 'transactions', 'user_devices', 'users', 'v_bank', 'wire_transfer', 'withdrawal'
     ];
 
     // Show available databases
@@ -126,7 +126,7 @@ header('Content-Type: text/html; charset=utf-8');
         $tables = [
             'withdrawal', 'wire_transfer', 'v_bank', 'transactions', 'temp_trans',
             'settings', 'messages', 'loan', 'domestic_transfer', 'deposit',
-            'crypto_currency', 'card_request', 'card', 'audit_logs', 'admin', 'users'
+            'crypto_currency', 'card_request', 'card', 'audit_logs', 'admin', 'user_devices', 'users'
         ];
         foreach ($tables as $tbl) {
             try { $conn->exec("DROP TABLE IF EXISTS `$tbl`"); } catch (\Throwable $e) {}

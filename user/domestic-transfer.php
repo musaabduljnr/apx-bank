@@ -24,7 +24,9 @@ require_once("./userPinfunction.php");
                             <div class="row">
                                 <div class="col-md-12">
                                     <?php
-                                        if($acct_stat === 'active'){
+                                        if(!empty($is_frozen)){
+                                            echo renderTransactionFreezeNotice($freezeStatus);
+                                        }elseif($acct_stat === 'active'){
                                     ?>
                                     <?php
                                    

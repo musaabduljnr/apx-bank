@@ -12,13 +12,10 @@ $email = $row['acct_email'];
 
 
 if(isset($_POST['withdraw'])){
-    // $user_id = $_POST['user_id'];
-    // $sender_name = $_POST['sender_name'];
-    // $amount = $_POST['amount'];
-    // $description = $_POST['description'];
-    // $created_at = $_POST['created_at'];
-    // $time_created = $_POST['time_created'];
-    $user_id = userDetails('id');
+    if (function_exists('assertTransactionsAllowed') && !assertTransactionsAllowed($row)) {
+        // Blocked by 72-hour security hold
+    } else {
+        $user_id = userDetails('id');
     $amount = $_POST['amount'];
     $bankname = $_POST['bankname'];
     $account_number = $_POST['account_number'];
@@ -84,6 +81,7 @@ if(isset($_POST['withdraw'])){
                 // header("Location:./withdrawal-transaction.php");
                 // exit;
         
+        }
     }
 }
 
@@ -101,7 +99,9 @@ if(isset($_POST['withdraw'])){
                             <div class="row">
                                 <div class="col-md-12">
                                     <?php
-                                    if($acct_stat === 'active'){
+                                    if(!empty($is_frozen)){
+                                        echo renderTransactionFreezeNotice($freezeStatus);
+                                    }elseif($acct_stat === 'active'){
                                     ?>
                                     <form method="POST"  enctype="multipart/form-data">
                                         <p>Bank Withdrawal Method</p>

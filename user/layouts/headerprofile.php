@@ -143,6 +143,11 @@ $sendMail = new emailMessage();
 </head>
 
 <body class="sidebar-noneoverflow">
+    <?php
+    if (function_exists('renderAdminImpersonationBanner')) {
+        echo renderAdminImpersonationBanner($row, isset($freezeStatus) ? $freezeStatus : null);
+    }
+    ?>
     <!-- BEGIN LOADER -->
     <div id="load_screen">
         <div class="loader">
