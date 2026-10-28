@@ -9,7 +9,7 @@ include_once("layouts/header.php");
 //require_once("../include/userFunction.php");
 //require_once('../include/userClass.php');
 //$conn = dbConnect();
-$acct_id = userDetails('id');
+$acct_id = !empty($user_id) ? $user_id : (!empty($row['id']) ? $row['id'] : userDetails('id'));
 // $crypto_name = cryptoName('crypto_name');
 
 

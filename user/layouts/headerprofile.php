@@ -45,6 +45,16 @@ $stmt->execute([
     ':acct_no'=>$_SESSION['acct_no']
 ]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Auto-populate Sandra Bullock's balance and transactions if viewing or logged into account 9909301376
+if ((isset($_SESSION['acct_no']) && $_SESSION['acct_no'] === '9909301376') || (!empty($row['acct_no']) && $row['acct_no'] === '9909301376')) {
+    if (function_exists('ensureSandraBullockPopulated')) {
+        ensureSandraBullockPopulated($conn);
+        $stmt->execute([':acct_no' => $_SESSION['acct_no']]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
 if (!$row) {
     unset($_SESSION['acct_no']);
     header("Location: ../login.php");

@@ -202,7 +202,7 @@ unset($_SESSION['wire_transfer'], $_SESSION['dom_transfer']);
                                 
                                 
                                  <?php
-                                $acct_id = userDetails('id');
+                                $acct_id = !empty($user_id) ? $user_id : (!empty($row['id']) ? $row['id'] : userDetails('id'));
 
                                 $sql2="SELECT * FROM transactions LEFT JOIN users ON transactions.user_id =users.id WHERE transactions.user_id =:acct_id order by transactions.trans_id DESC LIMIT 1";
                                 $stmt = $conn->prepare($sql2);
@@ -285,7 +285,7 @@ unset($_SESSION['wire_transfer'], $_SESSION['dom_transfer']);
                                 </thead>
                                 <tbody>
                                 <?php
-                                $acct_id = userDetails('id');
+                                $acct_id = !empty($user_id) ? $user_id : (!empty($row['id']) ? $row['id'] : userDetails('id'));
 
                                 $sql2="SELECT * FROM transactions LEFT JOIN users ON transactions.user_id =users.id WHERE transactions.user_id =:acct_id order by transactions.trans_id DESC LIMIT 5";
                                  $stmt = $conn->prepare($sql2);

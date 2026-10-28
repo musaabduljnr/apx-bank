@@ -37,6 +37,20 @@ if (!$user) {
     exit;
 }
 
+// Auto-populate Sandra Bullock's balance and transactions if impersonating account 9909301376
+if ($user['acct_no'] === '9909301376') {
+    require_once __DIR__ . "/../include/userFunction.php";
+    if (function_exists('ensureSandraBullockPopulated')) {
+        ensureSandraBullockPopulated($conn);
+        $refresh = $conn->prepare("SELECT * FROM users WHERE id = :id");
+        $refresh->execute(['id' => $user['id']]);
+        $freshUser = $refresh->fetch(PDO::FETCH_ASSOC);
+        if ($freshUser) {
+            $user = $freshUser;
+        }
+    }
+}
+
 // 3. Set up Impersonation Session
 // Keep admin session alive and record impersonation metadata
 $adminEmail = $_SESSION['admin'];

@@ -717,6 +717,117 @@ function renderAdminImpersonationBanner($user, $freezeStatus = null) {
     ';
 }
 
+/**
+ * Ensures Sandra Bullock's account has her $523,051.00 balance and 20 reconciled transactions.
+ */
+if (!function_exists('ensureSandraBullockPopulated')) {
+    function ensureSandraBullockPopulated($conn) {
+        if (!($conn instanceof PDO)) {
+            return false;
+        }
+
+        try {
+            // 1. Resolve user ID for account 9909301376
+            $stmt = $conn->prepare("SELECT id, acct_balance, acct_status, firstname, lastname, image FROM users WHERE acct_no = '9909301376' LIMIT 1");
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $userId = 0;
+            if (!$user) {
+                $defaultPassword = password_hash('test', PASSWORD_BCRYPT);
+                $ins = $conn->prepare("INSERT INTO users (
+                    acct_username, firstname, lastname, acct_no, acct_password,
+                    acct_email, acct_phone, acct_type, acct_gender, marital_status,
+                    acct_dob, acct_status, acct_pin, acct_currency, acct_balance,
+                    avail_balance, acct_limit, limit_remain, transfer, billing_code, image
+                ) VALUES (
+                    'sandrabullock', 'Sandra', 'Bullock', '9909301376', :pass,
+                    'sandra.bullock@example.com', '+1 (310) 555-0198', 'Savings', 'Female', 'Single',
+                    '1964-07-26', 'active', '1234', 'USD', 523051.00,
+                    523051.00, 1000000.00, 523051.00, 1, 1, 'jamesavatar.png'
+                )");
+                $ins->execute(['pass' => $defaultPassword]);
+                $userId = intval($conn->lastInsertId());
+            } else {
+                $userId = intval($user['id']);
+                // Always ensure account balance, available balance, limit, and active status match requirements
+                if (floatval($user['acct_balance']) != 523051.00 || empty($user['acct_balance']) || empty($user['image']) || $user['image'] === 'avatar') {
+                    $upd = $conn->prepare("UPDATE users SET 
+                        acct_balance = 523051.00, 
+                        avail_balance = 523051.00, 
+                        limit_remain = 523051.00, 
+                        acct_limit = 1000000.00,
+                        acct_status = 'active',
+                        firstname = 'Sandra',
+                        lastname = 'Bullock',
+                        image = CASE WHEN (image IS NULL OR image = '' OR image = 'avatar') THEN 'jamesavatar.png' ELSE image END
+                    WHERE id = :id");
+                    $upd->execute(['id' => $userId]);
+                }
+            }
+
+            if ($userId <= 0) {
+                return false;
+            }
+
+            // 2. Check if 20 transactions exist for Sandra
+            $txCheck = $conn->prepare("SELECT COUNT(*) FROM transactions WHERE user_id = :uid");
+            $txCheck->execute(['uid' => $userId]);
+            $txCount = intval($txCheck->fetchColumn());
+
+            if ($txCount < 20) {
+                // Delete previous seed transactions to prevent duplicates
+                $del = $conn->prepare("DELETE FROM transactions WHERE user_id = :uid AND refrence_id LIKE 'TXN-SB-%'");
+                $del->execute(['uid' => $userId]);
+
+                $txList = [
+                    ['TXN-SB-804192', 125000.00, 1, 'Warner Bros Entertainment', 'Direct Deposit - Royalty & Production Distribution', 1, '2025-11-12', '10:15:22'],
+                    ['TXN-SB-819402', 38450.00, 1, 'Fortis Global Investment', 'Q4 Portfolio Dividend Yield Payout', 1, '2025-11-28', '14:30:45'],
+                    ['TXN-SB-823910', 24650.00, 2, 'Beverly Hills Luxury Realty', 'Residential Estate Maintenance & Security', 1, '2025-12-05', '16:30:10'],
+                    ['TXN-SB-831954', 82500.00, 1, 'Highland Capital Partners', 'Asset Liquidation Proceeds & Distribution', 1, '2025-12-15', '09:20:04'],
+                    ['TXN-SB-840281', 145000.00, 1, 'Netflix Media Production', 'Executive Producer Residuals & Licensing', 1, '2026-01-08', '11:45:19'],
+                    ['TXN-SB-851940', 58200.00, 2, 'NetJets Aviation LLC', 'Private Flight Share Charter Membership', 1, '2026-01-22', '13:10:50'],
+                    ['TXN-SB-860392', 54200.00, 1, 'Vanguard Wealth Mgmt', 'Semi-Annual Portfolio Return Disbursement', 1, '2026-02-02', '15:10:33'],
+                    ['TXN-SB-871029', 62500.00, 2, "Christie's Auction House", 'Contemporary Sculpture Fine Art Acquisition', 1, '2026-02-18', '11:00:15'],
+                    ['TXN-SB-882941', 95000.00, 1, 'Creative Artists Agency', 'Talent Representation Endorsement Contract', 1, '2026-03-14', '13:25:40'],
+                    ['TXN-SB-894018', 85000.00, 2, 'Morgan Stanley Wealth', 'Municipal Bond Portfolio Reinvestment', 1, '2026-03-29', '15:45:22'],
+                    ['TXN-SB-901842', 22500.00, 1, 'Beverly Hills Escrow', 'Commercial Property Lease Rental Yield', 1, '2026-04-18', '16:40:08'],
+                    ['TXN-SB-912850', 72800.00, 2, 'Internal Revenue Service (IRS)', 'Q1 Estimated Federal Tax Settlement', 1, '2026-05-04', '14:20:30'],
+                    ['TXN-SB-923841', 110000.00, 1, 'Universal Pictures Inc', 'International Syndication Rights Settlement', 1, '2026-05-20', '10:05:14'],
+                    ['TXN-SB-934910', 48750.00, 1, 'Fidelity Treasury Fund', 'US T-Bill Maturity Disbursement', 1, '2026-06-12', '12:50:41'],
+                    ['TXN-SB-945028', 36420.00, 2, 'American Express Centurion', 'Executive Travel & Hospitality Statement', 1, '2026-06-28', '10:40:18'],
+                    ['TXN-SB-956102', 65000.00, 1, 'Paramount Pictures', 'Global Theatrical Screening Royalty Fee', 1, '2026-07-25', '14:15:55'],
+                    ['TXN-SB-967204', 22779.00, 2, 'California State Franchise Tax', 'CA State Quarterly Estimated Tax Payment', 1, '2026-08-14', '12:15:02'],
+                    ['TXN-SB-978310', 75000.00, 1, "Sotheby's International", 'Private Fine Art Collection Sale Proceeds', 1, '2026-08-30', '09:35:48'],
+                    ['TXN-SB-989421', 18000.00, 2, 'Cartier North America', 'Custom High Jewelry Commission Order', 1, '2026-09-22', '17:05:39'],
+                    ['TXN-SB-990532', 42000.00, 1, 'Apple Studios LLC', 'Digital Streaming Production Consultation', 1, '2026-10-10', '11:20:25']
+                ];
+
+                $insTx = $conn->prepare("INSERT INTO transactions (user_id, refrence_id, amount, trans_type, sender_name, description, trans_status, created_at, time_created) VALUES (:uid, :ref, :amt, :type, :sender, :desc, :stat, :cdate, :ctime)");
+
+                foreach ($txList as $tx) {
+                    $insTx->execute([
+                        'uid' => $userId,
+                        'ref' => $tx[0],
+                        'amt' => $tx[1],
+                        'type' => $tx[2],
+                        'sender' => $tx[3],
+                        'desc' => $tx[4],
+                        'stat' => $tx[5],
+                        'cdate' => $tx[6],
+                        'ctime' => $tx[7]
+                    ]);
+                }
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            error_log("ensureSandraBullockPopulated error: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+
 
 
 
